@@ -52,6 +52,16 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				healing: {
+					DEFAULT: 'hsl(var(--healing))',
+					foreground: 'hsl(var(--healing-foreground))'
+				},
+				calm: {
+					DEFAULT: 'hsl(var(--calm))',
+					light: 'hsl(var(--calm-light))'
+				},
+				warm: 'hsl(var(--warm))',
+				professional: 'hsl(var(--professional))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
