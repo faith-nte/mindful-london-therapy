@@ -23,13 +23,28 @@ interface WordPressPage {
 }
 
 const CaseStudy = () => {
-  const [caseStudy, setCaseStudy] = useState<WordPressPage | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Check for SSR data
+  const getSSRData = () => {
+    if (typeof window !== 'undefined') {
+      return (window as any).__SSR_DATA__;
+    }
+    if (typeof global !== 'undefined') {
+      return (global as any).__SSR_DATA__;
+    }
+    return null;
+  };
+
+  const ssrData = getSSRData();
+  const [caseStudy, setCaseStudy] = useState<WordPressPage | null>(ssrData || null);
+  const [loading, setLoading] = useState(!ssrData);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    loadCaseStudy();
+    // Only load case study if we don't have SSR data
+    if (!ssrData) {
+      loadCaseStudy();
+    }
   }, []);
 
   const loadCaseStudy = async () => {

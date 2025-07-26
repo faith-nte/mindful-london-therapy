@@ -71,12 +71,24 @@ const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
 };
 
 const Blog = () => {
-  const [posts, setPosts] = useState<WordPressPost[]>([]);
+  // Check for SSR data
+  const getSSRData = () => {
+    if (typeof window !== 'undefined') {
+      return (window as any).__SSR_DATA__;
+    }
+    if (typeof global !== 'undefined') {
+      return (global as any).__SSR_DATA__;
+    }
+    return null;
+  };
+
+  const ssrData = getSSRData();
+  const [posts, setPosts] = useState<WordPressPost[]>(ssrData?.posts || []);
   const [selectedPost, setSelectedPost] = useState<WordPressPost | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!ssrData?.posts);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(ssrData?.hasMore ?? true);
   const [apiService] = useState<WordPressApiService>(
     () => new WordPressApiService({ baseUrl: 'https://fenn.digital' })
   );
@@ -84,7 +96,10 @@ const Blog = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    loadPosts(1, true);
+    // Only load posts if we don't have SSR data
+    if (!ssrData?.posts) {
+      loadPosts(1, true);
+    }
   }, []);
 
   const loadPosts = async (page: number = 1, reset: boolean = false) => {
