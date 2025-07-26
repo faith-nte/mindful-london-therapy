@@ -32,6 +32,12 @@ const Navigation = () => {
             Approach
           </button>
           <button 
+            onClick={() => scrollToSection('blog')}
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Blog
+          </button>
+          <button 
             onClick={() => scrollToSection('contact')}
             className="text-foreground hover:text-primary transition-colors"
           >
