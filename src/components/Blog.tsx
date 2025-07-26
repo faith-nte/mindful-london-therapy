@@ -12,10 +12,15 @@ const Blog = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [wordpressUrl, setWordpressUrl] = useState('');
-  const [apiService, setApiService] = useState<WordPressApiService | null>(null);
-  const [isConfigured, setIsConfigured] = useState(false);
+  const [apiService] = useState<WordPressApiService>(
+    () => new WordPressApiService({ baseUrl: 'https://fenn.digital' })
+  );
+  const [isConfigured] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    loadPosts(1, true);
+  }, []);
 
   const loadPosts = async (page: number = 1, reset: boolean = false) => {
     if (!apiService) return;
@@ -49,31 +54,6 @@ const Blog = () => {
     }
   };
 
-  const handleConnect = async () => {
-    if (!wordpressUrl.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a WordPress site URL",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const service = new WordPressApiService({ baseUrl: wordpressUrl.trim() });
-      setApiService(service);
-      setIsConfigured(true);
-      
-      // Test the connection by loading the first page
-      await loadPosts(1, true);
-    } catch (err) {
-      toast({
-        title: "Connection Failed",
-        description: "Unable to connect to WordPress site. Please check the URL.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
@@ -89,57 +69,9 @@ const Blog = () => {
     return tmp.textContent || tmp.innerText || '';
   };
 
-  if (!isConfigured) {
-    return (
-      <section id="blog" className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-professional mb-4">
-                Insights & Resources
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-                Connect to a WordPress blog to share therapeutic insights, 
-                mental health resources, and professional guidance.
-              </p>
-            </div>
-
-            <Card className="p-8 max-w-2xl mx-auto">
-              <div className="space-y-6">
-                <div>
-                  <label htmlFor="wordpress-url" className="block text-sm font-medium text-professional mb-2">
-                    WordPress Site URL
-                  </label>
-                  <Input
-                    id="wordpress-url"
-                    type="url"
-                    value={wordpressUrl}
-                    onChange={(e) => setWordpressUrl(e.target.value)}
-                    placeholder="https://your-wordpress-site.com"
-                    className="w-full"
-                  />
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Enter the URL of your WordPress site (e.g., https://blog.example.com)
-                  </p>
-                </div>
-                
-                <Button 
-                  onClick={handleConnect}
-                  disabled={loading}
-                  className="w-full bg-primary hover:bg-primary/90"
-                >
-                  {loading ? "Connecting..." : "Connect to WordPress"}
-                </Button>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   return (
-    <section id="blog" className="py-20 bg-background">
+    <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -210,7 +142,7 @@ const Blog = () => {
                         <Button 
                           variant="outline"
                           className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                          onClick={() => window.open(`${wordpressUrl}/${post.slug}`, '_blank')}
+                          onClick={() => window.open(`https://fenn.digital/${post.slug}`, '_blank')}
                         >
                           Read More
                         </Button>

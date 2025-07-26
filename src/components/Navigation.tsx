@@ -1,7 +1,14 @@
 import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "react-router-dom";
 
 const Navigation = () => {
+  const location = useLocation();
+  
   const scrollToSection = (sectionId: string) => {
+    if (location.pathname !== '/') {
+      window.location.href = `/#${sectionId}`;
+      return;
+    }
     const element = document.getElementById(sectionId);
     element?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -31,12 +38,12 @@ const Navigation = () => {
           >
             Approach
           </button>
-          <button 
-            onClick={() => scrollToSection('blog')}
+          <Link 
+            to="/blog"
             className="text-foreground hover:text-primary transition-colors"
           >
             Blog
-          </button>
+          </Link>
           <button 
             onClick={() => scrollToSection('contact')}
             className="text-foreground hover:text-primary transition-colors"
