@@ -44,6 +44,12 @@ const Navigation = () => {
           >
             Blog
           </Link>
+          <Link 
+            to="/case-study"
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Case Study
+          </Link>
           <button 
             onClick={() => scrollToSection('contact')}
             className="text-foreground hover:text-primary transition-colors"
