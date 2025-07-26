@@ -128,6 +128,12 @@ const CaseStudy = () => {
   }
 
   const featuredImage = caseStudy._embedded?.['wp:featuredmedia']?.[0];
+  
+  // Extract content from available sources
+  const hasMainContent = caseStudy.content.rendered.trim().length > 0;
+  const rankMathData = (caseStudy as any).rankMath?.assessor?.serpData;
+  const metaDescription = rankMathData?.description || '';
+  const metaTitle = rankMathData?.title || '';
 
   return (
     <section className="py-20 bg-background">
@@ -153,10 +159,31 @@ const CaseStudy = () => {
           )}
 
           <Card className="p-8">
-            <div 
-              className="prose prose-lg max-w-none text-foreground"
-              dangerouslySetInnerHTML={{ __html: caseStudy.content.rendered }}
-            />
+            {hasMainContent ? (
+              <div 
+                className="prose prose-lg max-w-none text-foreground"
+                dangerouslySetInnerHTML={{ __html: caseStudy.content.rendered }}
+              />
+            ) : (
+              <div className="prose prose-lg max-w-none text-foreground">
+                {metaTitle && metaTitle !== stripHtml(caseStudy.title.rendered) && (
+                  <h2 className="text-2xl font-semibold mb-6">{metaTitle}</h2>
+                )}
+                {metaDescription && (
+                  <p className="text-lg leading-relaxed mb-8">{metaDescription}</p>
+                )}
+                {!metaDescription && (
+                  <div className="text-center py-12">
+                    <h3 className="text-xl font-semibold text-muted-foreground mb-4">
+                      Case Study In Development
+                    </h3>
+                    <p className="text-muted-foreground">
+                      This case study is currently being prepared. Please check back soon for detailed insights and results.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </Card>
         </div>
       </div>
