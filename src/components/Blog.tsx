@@ -1,13 +1,78 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { WordPressApiService, WordPressPost } from '@/services/wordpressApi';
+import { ArrowLeft } from 'lucide-react';
+
+interface BlogPostViewProps {
+  post: WordPressPost;
+  onBack: () => void;
+}
+
+const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const stripHtml = (html: string) => {
+    const tmp = document.createElement('DIV');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  };
+
+  const featuredImage = post._embedded?.['wp:featuredmedia']?.[0];
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <Button 
+        onClick={onBack}
+        variant="outline"
+        className="mb-8 flex items-center gap-2"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Blog
+      </Button>
+
+      <article>
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-professional mb-4">
+            {stripHtml(post.title.rendered)}
+          </h1>
+          <div className="text-sm text-primary mb-8">
+            Published on {formatDate(post.date)}
+          </div>
+        </div>
+
+        {featuredImage && (
+          <div className="mb-12">
+            <img 
+              src={featuredImage.source_url}
+              alt={featuredImage.alt_text || post.title.rendered}
+              className="w-full h-auto rounded-lg shadow-lg"
+            />
+          </div>
+        )}
+
+        <Card className="p-8">
+          <div 
+            className="prose prose-lg max-w-none text-foreground"
+            dangerouslySetInnerHTML={{ __html: post.content.rendered }}
+          />
+        </Card>
+      </article>
+    </div>
+  );
+};
 
 const Blog = () => {
   const [posts, setPosts] = useState<WordPressPost[]>([]);
+  const [selectedPost, setSelectedPost] = useState<WordPressPost | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,8 +88,6 @@ const Blog = () => {
   }, []);
 
   const loadPosts = async (page: number = 1, reset: boolean = false) => {
-    if (!apiService) return;
-    
     setLoading(true);
     setError(null);
     
@@ -54,7 +117,6 @@ const Blog = () => {
     }
   };
 
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
       year: 'numeric',
@@ -69,6 +131,18 @@ const Blog = () => {
     return tmp.textContent || tmp.innerText || '';
   };
 
+  if (selectedPost) {
+    return (
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <BlogPostView 
+            post={selectedPost} 
+            onBack={() => setSelectedPost(null)} 
+          />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-20 bg-background">
@@ -115,7 +189,7 @@ const Blog = () => {
                   const featuredImage = post._embedded?.['wp:featuredmedia']?.[0];
                   
                   return (
-                    <Card key={post.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow group">
+                    <Card key={post.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow group cursor-pointer">
                       {featuredImage && (
                         <div className="aspect-video overflow-hidden">
                           <img 
@@ -135,14 +209,15 @@ const Blog = () => {
                           {stripHtml(post.title.rendered)}
                         </h3>
                         
-                        <p className="text-muted-foreground mb-4 line-clamp-3">
-                          {stripHtml(post.excerpt.rendered)}
-                        </p>
+                        <div 
+                          className="text-muted-foreground mb-4 line-clamp-3 prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: post.excerpt.rendered }}
+                        />
                         
                         <Button 
                           variant="outline"
                           className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                          onClick={() => window.open(`https://fenn.digital/${post.slug}`, '_blank')}
+                          onClick={() => setSelectedPost(post)}
                         >
                           Read More
                         </Button>
