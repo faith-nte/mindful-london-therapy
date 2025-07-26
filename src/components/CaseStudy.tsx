@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
@@ -15,7 +15,7 @@ interface WordPressPage {
   slug: string;
   featured_media: number;
   _embedded?: {
-    'wp:featuredmedia'?: Array<{
+    "wp:featuredmedia"?: Array<{
       source_url: string;
       alt_text: string;
     }>;
@@ -25,17 +25,19 @@ interface WordPressPage {
 const CaseStudy = () => {
   // Check for SSR data
   const getSSRData = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       return (window as any).__SSR_DATA__;
     }
-    if (typeof global !== 'undefined') {
+    if (typeof global !== "undefined") {
       return (global as any).__SSR_DATA__;
     }
     return null;
   };
 
   const ssrData = getSSRData();
-  const [caseStudy, setCaseStudy] = useState<WordPressPage | null>(ssrData || null);
+  const [caseStudy, setCaseStudy] = useState<WordPressPage | null>(
+    ssrData || null
+  );
   const [loading, setLoading] = useState(!ssrData);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -50,25 +52,26 @@ const CaseStudy = () => {
   const loadCaseStudy = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(
-        'https://fenn.digital/wp-json/wp/v2/pages?slug=private-psychiatrists-seo&_embed=true'
+        "https://fenn.digital/wp-json/wp/v2/pages?slug=private-psychiatrists-seo&_embed=true"
       );
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch case study: ${response.statusText}`);
       }
-      
+
       const pages: WordPressPage[] = await response.json();
-      
+
       if (pages.length === 0) {
-        throw new Error('Case study not found');
+        throw new Error("Case study not found");
       }
-      
+
       setCaseStudy(pages[0]);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load case study';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to load case study";
       setError(errorMessage);
       toast({
         title: "Error",
@@ -81,17 +84,16 @@ const CaseStudy = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-GB", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const stripHtml = (html: string) => {
-    const tmp = document.createElement('DIV');
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || '';
+    // SSR-safe: remove HTML tags using regex
+    return html.replace(/<[^>]*>/g, "");
   };
 
   if (loading) {
@@ -118,7 +120,9 @@ const CaseStudy = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <Card className="p-8 border-destructive">
-              <h2 className="text-2xl font-bold text-destructive mb-4">Error Loading Case Study</h2>
+              <h2 className="text-2xl font-bold text-destructive mb-4">
+                Error Loading Case Study
+              </h2>
               <p className="text-destructive">{error}</p>
             </Card>
           </div>
@@ -133,8 +137,12 @@ const CaseStudy = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <Card className="p-8">
-              <h2 className="text-2xl font-bold text-muted-foreground mb-4">No Case Study Found</h2>
-              <p className="text-muted-foreground">The requested case study could not be found.</p>
+              <h2 className="text-2xl font-bold text-muted-foreground mb-4">
+                No Case Study Found
+              </h2>
+              <p className="text-muted-foreground">
+                The requested case study could not be found.
+              </p>
             </Card>
           </div>
         </div>
@@ -142,13 +150,13 @@ const CaseStudy = () => {
     );
   }
 
-  const featuredImage = caseStudy._embedded?.['wp:featuredmedia']?.[0];
-  
+  const featuredImage = caseStudy._embedded?.["wp:featuredmedia"]?.[0];
+
   // Extract content from available sources
   const hasMainContent = caseStudy.content.rendered.trim().length > 0;
   const rankMathData = (caseStudy as any).rankMath?.assessor?.serpData;
-  const metaDescription = rankMathData?.description || '';
-  const metaTitle = rankMathData?.title || '';
+  const metaDescription = rankMathData?.description || "";
+  const metaTitle = rankMathData?.title || "";
 
   return (
     <section className="py-20 bg-background">
@@ -165,7 +173,7 @@ const CaseStudy = () => {
 
           {featuredImage && (
             <div className="mb-12">
-              <img 
+              <img
                 src={featuredImage.source_url}
                 alt={featuredImage.alt_text || caseStudy.title.rendered}
                 className="w-full h-auto rounded-lg shadow-lg"
@@ -175,17 +183,20 @@ const CaseStudy = () => {
 
           <Card className="p-8">
             {hasMainContent ? (
-              <div 
+              <div
                 className="prose prose-lg max-w-none text-foreground"
                 dangerouslySetInnerHTML={{ __html: caseStudy.content.rendered }}
               />
             ) : (
               <div className="prose prose-lg max-w-none text-foreground">
-                {metaTitle && metaTitle !== stripHtml(caseStudy.title.rendered) && (
-                  <h2 className="text-2xl font-semibold mb-6">{metaTitle}</h2>
-                )}
+                {metaTitle &&
+                  metaTitle !== stripHtml(caseStudy.title.rendered) && (
+                    <h2 className="text-2xl font-semibold mb-6">{metaTitle}</h2>
+                  )}
                 {metaDescription && (
-                  <p className="text-lg leading-relaxed mb-8">{metaDescription}</p>
+                  <p className="text-lg leading-relaxed mb-8">
+                    {metaDescription}
+                  </p>
                 )}
                 {!metaDescription && (
                   <div className="text-center py-12">
@@ -193,7 +204,8 @@ const CaseStudy = () => {
                       Case Study In Development
                     </h3>
                     <p className="text-muted-foreground">
-                      This case study is currently being prepared. Please check back soon for detailed insights and results.
+                      This case study is currently being prepared. Please check
+                      back soon for detailed insights and results.
                     </p>
                   </div>
                 )}

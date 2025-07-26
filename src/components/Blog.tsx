@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
-import { WordPressApiService, WordPressPost } from '@/services/wordpressApi';
-import { ArrowLeft } from 'lucide-react';
+import { WordPressApiService, WordPressPost } from "@/services/wordpressApi";
+import { ArrowLeft } from "lucide-react";
 
 interface BlogPostViewProps {
   post: WordPressPost;
@@ -13,24 +13,23 @@ interface BlogPostViewProps {
 
 const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-GB", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const stripHtml = (html: string) => {
-    const tmp = document.createElement('DIV');
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || '';
+    // SSR-safe: remove HTML tags using regex
+    return html.replace(/<[^>]*>/g, "");
   };
 
-  const featuredImage = post._embedded?.['wp:featuredmedia']?.[0];
+  const featuredImage = post._embedded?.["wp:featuredmedia"]?.[0];
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Button 
+      <Button
         onClick={onBack}
         variant="outline"
         className="mb-8 flex items-center gap-2"
@@ -51,7 +50,7 @@ const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
 
         {featuredImage && (
           <div className="mb-12">
-            <img 
+            <img
               src={featuredImage.source_url}
               alt={featuredImage.alt_text || post.title.rendered}
               className="w-full h-auto rounded-lg shadow-lg"
@@ -60,7 +59,7 @@ const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
         )}
 
         <Card className="p-8">
-          <div 
+          <div
             className="prose prose-lg max-w-none text-foreground"
             dangerouslySetInnerHTML={{ __html: post.content.rendered }}
           />
@@ -73,10 +72,10 @@ const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
 const Blog = () => {
   // Check for SSR data
   const getSSRData = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       return (window as any).__SSR_DATA__;
     }
-    if (typeof global !== 'undefined') {
+    if (typeof global !== "undefined") {
       return (global as any).__SSR_DATA__;
     }
     return null;
@@ -90,7 +89,7 @@ const Blog = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(ssrData?.hasMore ?? true);
   const [apiService] = useState<WordPressApiService>(
-    () => new WordPressApiService({ baseUrl: 'https://fenn.digital' })
+    () => new WordPressApiService({ baseUrl: "https://fenn.digital" })
   );
   const [isConfigured] = useState(true);
   const { toast } = useToast();
@@ -105,14 +104,15 @@ const Blog = () => {
   const loadPosts = async (page: number = 1, reset: boolean = false) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const { posts: newPosts, hasMore: moreAvailable } = await apiService.getPosts(page);
-      
-      setPosts(prev => reset ? newPosts : [...prev, ...newPosts]);
+      const { posts: newPosts, hasMore: moreAvailable } =
+        await apiService.getPosts(page);
+
+      setPosts((prev) => (reset ? newPosts : [...prev, ...newPosts]));
       setHasMore(moreAvailable);
       setCurrentPage(page);
-      
+
       if (reset) {
         toast({
           title: "Success",
@@ -120,7 +120,8 @@ const Blog = () => {
         });
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load posts';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to load posts";
       setError(errorMessage);
       toast({
         title: "Error",
@@ -133,26 +134,25 @@ const Blog = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-GB", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const stripHtml = (html: string) => {
-    const tmp = document.createElement('DIV');
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || '';
+    // SSR-safe: remove HTML tags using regex
+    return html.replace(/<[^>]*>/g, "");
   };
 
   if (selectedPost) {
     return (
       <section className="py-20 bg-background">
         <div className="container mx-auto px-4">
-          <BlogPostView 
-            post={selectedPost} 
-            onBack={() => setSelectedPost(null)} 
+          <BlogPostView
+            post={selectedPost}
+            onBack={() => setSelectedPost(null)}
           />
         </div>
       </section>
@@ -168,15 +168,15 @@ const Blog = () => {
               Insights & Resources
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Explore articles on mental health, therapeutic techniques, 
-              and personal growth to support your journey to wellbeing.
+              Explore articles on mental health, therapeutic techniques, and
+              personal growth to support your journey to wellbeing.
             </p>
           </div>
 
           {error && (
             <Card className="p-6 mb-8 border-destructive">
               <p className="text-destructive text-center">{error}</p>
-              <Button 
+              <Button
                 onClick={() => loadPosts(1, true)}
                 variant="outline"
                 className="w-full mt-4"
@@ -201,35 +201,41 @@ const Blog = () => {
             <>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
                 {posts.map((post) => {
-                  const featuredImage = post._embedded?.['wp:featuredmedia']?.[0];
-                  
+                  const featuredImage =
+                    post._embedded?.["wp:featuredmedia"]?.[0];
+
                   return (
-                    <Card key={post.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow group cursor-pointer">
+                    <Card
+                      key={post.id}
+                      className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow group cursor-pointer"
+                    >
                       {featuredImage && (
                         <div className="aspect-video overflow-hidden">
-                          <img 
+                          <img
                             src={featuredImage.source_url}
                             alt={featuredImage.alt_text || post.title.rendered}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                       )}
-                      
+
                       <div className="p-6">
                         <div className="text-sm text-primary mb-2">
                           {formatDate(post.date)}
                         </div>
-                        
+
                         <h3 className="text-xl font-semibold text-professional mb-3 line-clamp-2">
                           {stripHtml(post.title.rendered)}
                         </h3>
-                        
-                        <div 
+
+                        <div
                           className="text-muted-foreground mb-4 line-clamp-3 prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: post.excerpt.rendered }}
+                          dangerouslySetInnerHTML={{
+                            __html: post.excerpt.rendered,
+                          }}
                         />
-                        
-                        <Button 
+
+                        <Button
                           variant="outline"
                           className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                           onClick={() => setSelectedPost(post)}
@@ -244,7 +250,7 @@ const Blog = () => {
 
               {hasMore && (
                 <div className="text-center">
-                  <Button 
+                  <Button
                     onClick={() => loadPosts(currentPage + 1)}
                     disabled={loading}
                     variant="outline"
