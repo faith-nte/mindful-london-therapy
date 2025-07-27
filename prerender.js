@@ -24,12 +24,13 @@ async function fetchBlogSlugs() {
   }
 }
 
-// Build routes to prerender
+// Build routes to prerender - these should match the routes in App.tsx
 const staticRoutes = [
-  "/",
-  "/blog",
-  // '/case-study', // Temporarily skip to avoid SSR error
-  // Add new pages/blogs here as you create them in src/pages and App.tsx
+  "/",           // Index page
+  "/blog",       // Blog listing page
+  "/case-study", // Case study page
+  // Add new static pages here as you create them in src/pages and App.tsx
+  // Dynamic blog routes (/blog/:slug) are automatically fetched below
 ];
 
 (async () => {
