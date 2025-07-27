@@ -34,7 +34,6 @@ const staticRoutes = [
   // Add new static pages here as you create them in src/pages and App.tsx
   // Dynamic blog routes (/blog/:slug) are automatically fetched below
 ];
-];
 
 (async () => {
   const blogRoutes = await fetchBlogSlugs();
