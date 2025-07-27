@@ -27,25 +27,29 @@ export async function onRequest(context) {
   if (prerenderedPaths.includes(pathname)) {
     const htmlPath = pathname === '/' ? '/index.html' : `${pathname}.html`;
     try {
-      const response = await context.env.ASSETS.fetch(htmlPath);
+      const response = await context.env.ASSETS.fetch(new Request(`${url.origin}${htmlPath}`));
       if (response.status === 200) {
         return response;
       }
     } catch (e) {
-      // Continue to fallback
+      console.log(`Failed to fetch prerendered file ${htmlPath}:`, e);
     }
   }
 
   // Fallback to index.html for SPA routing (client-side rendering)
   try {
-    const indexResponse = await context.env.ASSETS.fetch('/index.html');
-    return new Response(await indexResponse.text(), {
-      headers: { 
-        'content-type': 'text/html',
-        'cache-control': 'no-cache' // Don't cache SPA fallbacks
-      }
-    });
+    const indexResponse = await context.env.ASSETS.fetch(new Request(`${url.origin}/index.html`));
+    if (indexResponse.status === 200) {
+      return new Response(await indexResponse.text(), {
+        headers: { 
+          'content-type': 'text/html',
+          'cache-control': 'no-cache' // Don't cache SPA fallbacks
+        }
+      });
+    }
   } catch (e) {
-    return new Response('Not Found', { status: 404 });
+    console.log('Failed to fetch index.html:', e);
   }
+  
+  return new Response('Not Found', { status: 404 });
 }
