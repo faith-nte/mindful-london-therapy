@@ -27,11 +27,13 @@ async function fetchBlogSlugs() {
 }
 
 // Build routes to prerender - these should match the routes in App.tsx
+// IMPORTANT: Add all static routes from App.tsx here. Nested routes should use their full path.
 const staticRoutes = [
   "/",           // Index page
   "/blog",       // Blog listing page
   "/case-study", // Case study page
   // Add new static pages here as you create them in src/pages and App.tsx
+  // Example: "/services", "/about", "/contact"
   // Dynamic blog routes (/blog/:slug) are automatically fetched below
 ];
 
@@ -67,14 +69,25 @@ const staticRoutes = [
 
     // Ensure subdirectories exist before writing the file
     // e.g. /blog/my-post => dist/blog/my-post.html
+    // Output HTML file should match the route structure
+    // e.g. /blog/my-post => dist/blog/my-post/index.html
     let filePath;
     if (url === "/") {
       filePath = "dist/index.html";
-    } else if (url.startsWith("/blog/")) {
-      // Nested blog post route
-      filePath = `dist${url}.html`;
     } else {
-      filePath = `dist${url}.html`;
+      // Remove leading slash and split into segments
+      const segments = url.slice(1).split("/");
+      // If last segment is empty, treat as index.html
+      if (segments[segments.length - 1] === "") {
+        segments.pop();
+      }
+      // If route is /blog or /case-study, output dist/blog/index.html etc
+      if (segments.length === 1) {
+        filePath = `dist/${segments[0]}/index.html`;
+      } else {
+        // For nested routes, e.g. /blog/my-post
+        filePath = `dist/${segments.join("/")}/index.html`;
+      }
     }
     const fullPath = toAbsolute(filePath);
     const dir = path.dirname(fullPath);
