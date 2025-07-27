@@ -60,20 +60,47 @@ export async function onRequest(context) {
           const posts = await apiRes.json();
           if (posts.length > 0) {
             const post = posts[0];
-            
-            // Enhanced meta data for blog posts
+
+            // Pull SEO data from any available SEO plugin fields (AIOSEO, Yoast, Rank Math, fallback to post fields)
+            const seoSources = [
+              post.aioseo_head_json,
+              post.aioseo,
+              post.yoast_head_json,
+              post.rank_math_head_json,
+              post.seo,
+              {},
+            ];
+            const seo = seoSources.find(
+              (s) =>
+                s &&
+                (s.title ||
+                  s.og_title ||
+                  s.description ||
+                  s.og_description ||
+                  s.canonical_url)
+            );
             const postMeta = {
-              title: post.title.rendered,
-              description: post.excerpt.rendered
-                .replace(/<[^>]*>/g, "")
-                .substring(0, 160),
-              ogImage: post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || "https://yourdomain.com/og-blog.jpg",
-              canonical: `https://yourdomain.com/blog/${post.slug}`,
-              schema: {
+              title: seo?.title || seo?.og_title || post.title.rendered,
+              description:
+                seo?.description ||
+                seo?.og_description ||
+                post.excerpt.rendered.replace(/<[^>]*>/g, "").substring(0, 160),
+              ogImage:
+                seo?.og_image ||
+                post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
+                "https://yourdomain.com/og-blog.jpg",
+              canonical:
+                seo?.canonical_url ||
+                `https://yourdomain.com/blog/${post.slug}`,
+              schema: seo?.schema || {
                 "@context": "https://schema.org",
                 "@type": "BlogPosting",
-                headline: post.title.rendered,
-                description: post.excerpt.rendered.replace(/<[^>]*>/g, "").substring(0, 160),
+                headline: seo?.title || post.title.rendered,
+                description:
+                  seo?.description ||
+                  post.excerpt.rendered
+                    .replace(/<[^>]*>/g, "")
+                    .substring(0, 160),
                 datePublished: post.date,
                 author: {
                   "@type": "Person",
@@ -86,7 +113,9 @@ export async function onRequest(context) {
                 },
                 mainEntityOfPage: {
                   "@type": "WebPage",
-                  "@id": `https://yourdomain.com/blog/${post.slug}`,
+                  "@id":
+                    seo?.canonical_url ||
+                    `https://yourdomain.com/blog/${post.slug}`,
                 },
               },
             };
@@ -108,20 +137,31 @@ export async function onRequest(context) {
             // The SSR is complex in Cloudflare environment, so we'll use client-side hydration
             if (template) {
               let fallbackHtml = template;
-              
+
               // Inject post data as SSR data for hydration
-              const ssrDataScript = `<script>window.__SSR_DATA__ = ${JSON.stringify({ post, ...postMeta })};</script>`;
-              fallbackHtml = fallbackHtml.replace('</head>', `${ssrDataScript}\n</head>`);
-              
+              const ssrDataScript = `<script>window.__SSR_DATA__ = ${JSON.stringify(
+                { post, ...postMeta }
+              )};</script>`;
+              fallbackHtml = fallbackHtml.replace(
+                "</head>",
+                `${ssrDataScript}\n</head>`
+              );
+
               // Update title and meta tags
-              fallbackHtml = fallbackHtml.replace(/<title[^>]*>.*?<\/title>/i, `<title>${postMeta.title}</title>`);
-              
+              fallbackHtml = fallbackHtml.replace(
+                /<title[^>]*>.*?<\/title>/i,
+                `<title>${postMeta.title}</title>`
+              );
+
               // Add meta description
               if (!fallbackHtml.includes('name="description"')) {
                 const metaDescription = `<meta name="description" content="${postMeta.description}">`;
-                fallbackHtml = fallbackHtml.replace('</head>', `${metaDescription}\n</head>`);
+                fallbackHtml = fallbackHtml.replace(
+                  "</head>",
+                  `${metaDescription}\n</head>`
+                );
               }
-              
+
               // Add Open Graph tags
               const ogTags = `
                 <meta property="og:title" content="${postMeta.title}">
@@ -130,8 +170,11 @@ export async function onRequest(context) {
                 <meta property="og:url" content="${postMeta.canonical}">
                 <meta property="og:type" content="article">
               `;
-              fallbackHtml = fallbackHtml.replace('</head>', `${ogTags}\n</head>`);
-              
+              fallbackHtml = fallbackHtml.replace(
+                "</head>",
+                `${ogTags}\n</head>`
+              );
+
               return new Response(fallbackHtml, {
                 headers: {
                   "content-type": "text/html; charset=UTF-8",
