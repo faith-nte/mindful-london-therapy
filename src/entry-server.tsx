@@ -6,6 +6,35 @@ import App from "./App";
 const getPageMeta = (url: string, apiData?: any) => {
   const baseUrl = "https://yourdomain.com"; // Update with your actual domain
 
+  // Handle /blog/:slug routes for individual blog posts
+  if (url.startsWith("/blog/") && apiData && apiData.title && apiData.excerpt) {
+    const baseUrl = "https://yourdomain.com";
+    return {
+      title: apiData.title.rendered,
+      description: apiData.excerpt.rendered.replace(/<[^>]*>/g, "").substring(0, 160),
+      ogImage: apiData._embedded?.["wp:featuredmedia"]?.[0]?.source_url || `${baseUrl}/og-blog.jpg`,
+      canonical: `${baseUrl}${url}`,
+      schema: {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        headline: apiData.title.rendered,
+        description: apiData.excerpt.rendered.replace(/<[^>]*>/g, "").substring(0, 160),
+        datePublished: apiData.date,
+        author: {
+          "@type": "Person",
+          name: "Dr. Sarah Mitchell",
+        },
+        publisher: {
+          "@type": "Organization",
+          name: "Dr. Sarah Mitchell Therapy Services",
+        },
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": `${baseUrl}${url}`,
+        },
+      },
+    };
+  }
   switch (url) {
     case "/":
       return {
