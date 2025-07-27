@@ -104,39 +104,40 @@ export async function onRequest(context) {
               console.log("Failed to load template:", e);
             }
 
-            // SSR: import entry-server.js and render complete HTML
-            try {
-              const { renderFullHTML } = await import("../dist/server/entry-server.js");
-              const html = await renderFullHTML(pathname, { post, ...postMeta }, template);
+            // Skip SSR and use fallback with injected data directly
+            // The SSR is complex in Cloudflare environment, so we'll use client-side hydration
+            if (template) {
+              let fallbackHtml = template;
               
-              if (html) {
-                return new Response(html, {
-                  headers: {
-                    "content-type": "text/html; charset=UTF-8",
-                    "cache-control": "public, max-age=3600", // Cache blog posts for 1 hour
-                  },
-                });
+              // Inject post data as SSR data for hydration
+              const ssrDataScript = `<script>window.__SSR_DATA__ = ${JSON.stringify({ post, ...postMeta })};</script>`;
+              fallbackHtml = fallbackHtml.replace('</head>', `${ssrDataScript}\n</head>`);
+              
+              // Update title and meta tags
+              fallbackHtml = fallbackHtml.replace(/<title[^>]*>.*?<\/title>/i, `<title>${postMeta.title}</title>`);
+              
+              // Add meta description
+              if (!fallbackHtml.includes('name="description"')) {
+                const metaDescription = `<meta name="description" content="${postMeta.description}">`;
+                fallbackHtml = fallbackHtml.replace('</head>', `${metaDescription}\n</head>`);
               }
-            } catch (ssrError) {
-              console.log(`SSR failed for ${pathname}:`, ssrError);
-              // Fall back to template with injected data
-              if (template) {
-                let fallbackHtml = template;
-                
-                // Inject post data as SSR data for hydration
-                const ssrDataScript = `<script>window.__SSR_DATA__ = ${JSON.stringify({ post, ...postMeta })};</script>`;
-                fallbackHtml = fallbackHtml.replace('</head>', `${ssrDataScript}\n</head>`);
-                
-                // Update title
-                fallbackHtml = fallbackHtml.replace(/<title[^>]*>.*?<\/title>/i, `<title>${postMeta.title}</title>`);
-                
-                return new Response(fallbackHtml, {
-                  headers: {
-                    "content-type": "text/html; charset=UTF-8",
-                    "cache-control": "public, max-age=3600",
-                  },
-                });
-              }
+              
+              // Add Open Graph tags
+              const ogTags = `
+                <meta property="og:title" content="${postMeta.title}">
+                <meta property="og:description" content="${postMeta.description}">
+                <meta property="og:image" content="${postMeta.ogImage}">
+                <meta property="og:url" content="${postMeta.canonical}">
+                <meta property="og:type" content="article">
+              `;
+              fallbackHtml = fallbackHtml.replace('</head>', `${ogTags}\n</head>`);
+              
+              return new Response(fallbackHtml, {
+                headers: {
+                  "content-type": "text/html; charset=UTF-8",
+                  "cache-control": "public, max-age=3600",
+                },
+              });
             }
           }
         }
