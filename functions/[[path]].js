@@ -140,21 +140,36 @@ export async function onRequest(context) {
 
               // Always ensure favicon is present
               if (!fallbackHtml.includes('rel="icon"')) {
-                const faviconTag = '<link rel="icon" type="image/x-icon" href="/favicon.ico">';
-                fallbackHtml = fallbackHtml.replace('</head>', `${faviconTag}\n</head>`);
+                const faviconTag =
+                  '<link rel="icon" type="image/x-icon" href="/favicon.ico">';
+                fallbackHtml = fallbackHtml.replace(
+                  "</head>",
+                  `${faviconTag}\n</head>`
+                );
               }
 
               // Inject post data as SSR data for hydration
-              const ssrDataScript = `<script>window.__SSR_DATA__ = ${JSON.stringify({ post, ...postMeta })};</script>`;
-              fallbackHtml = fallbackHtml.replace('</head>', `${ssrDataScript}\n</head>`);
+              const ssrDataScript = `<script>window.__SSR_DATA__ = ${JSON.stringify(
+                { post, ...postMeta }
+              )};</script>`;
+              fallbackHtml = fallbackHtml.replace(
+                "</head>",
+                `${ssrDataScript}\n</head>`
+              );
 
               // Update title and meta tags
-              fallbackHtml = fallbackHtml.replace(/<title[^>]*>.*?<\/title>/i, `<title>${postMeta.title}</title>`);
+              fallbackHtml = fallbackHtml.replace(
+                /<title[^>]*>.*?<\/title>/i,
+                `<title>${postMeta.title}</title>`
+              );
 
               // Add meta description
               if (!fallbackHtml.includes('name="description"')) {
                 const metaDescription = `<meta name="description" content="${postMeta.description}">`;
-                fallbackHtml = fallbackHtml.replace('</head>', `${metaDescription}\n</head>`);
+                fallbackHtml = fallbackHtml.replace(
+                  "</head>",
+                  `${metaDescription}\n</head>`
+                );
               }
 
               // Add Open Graph tags
@@ -165,7 +180,10 @@ export async function onRequest(context) {
                 <meta property="og:url" content="${postMeta.canonical}">
                 <meta property="og:type" content="article">
               `;
-              fallbackHtml = fallbackHtml.replace('</head>', `${ogTags}\n</head>`);
+              fallbackHtml = fallbackHtml.replace(
+                "</head>",
+                `${ogTags}\n</head>`
+              );
 
               // Ensure all built CSS and JS assets are present
               // (Assumes Vite injects them in index.html, so just preserve them)
