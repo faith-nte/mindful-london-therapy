@@ -35,7 +35,7 @@ export async function onRequest(context) {
     }
   }
 
-  // Check if we have a prerendered HTML file for this route
+  // Serve prerendered HTML for main pages and single blog posts
   const prerenderedPaths = [
     "/",
     "/blog",
@@ -43,8 +43,25 @@ export async function onRequest(context) {
     "/services",
     "/about",
     "/contact",
+    // Add more static pages here
   ];
 
+  // Serve single blog post HTML if it exists (e.g., /blog/my-post)
+  if (pathname.startsWith("/blog/")) {
+    const htmlPath = `${pathname}.html`;
+    try {
+      const response = await context.env.ASSETS.fetch(
+        new Request(`${url.origin}${htmlPath}`)
+      );
+      if (response.status === 200) {
+        return response;
+      }
+    } catch (e) {
+      console.log(`Failed to fetch prerendered blog post file ${htmlPath}:`, e);
+    }
+  }
+
+  // Serve main prerendered pages
   if (prerenderedPaths.includes(pathname)) {
     const htmlPath = pathname === "/" ? "/index.html" : `${pathname}.html`;
     try {
