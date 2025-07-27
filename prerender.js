@@ -53,6 +53,21 @@ const staticRoutes = [
         _embedded: {},
       };
     }
+    // Fetch full post data for /blog/:slug routes
+    if (url.startsWith("/blog/") && url.split("/").length === 3) {
+      const slug = url.replace("/blog/", "");
+      try {
+        const postRes = await fetch(`https://fenn.digital/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`);
+        if (postRes.ok) {
+          const posts = await postRes.json();
+          if (posts.length > 0) {
+            apiData = posts[0];
+          }
+        }
+      } catch (e) {
+        console.warn(`Failed to fetch post data for slug ${slug}:`, e);
+      }
+    }
     // Use the new renderFullHTML function for complete HTML generation
     let html = await renderFullHTML(url, apiData, template);
 
