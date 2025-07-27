@@ -69,7 +69,11 @@ const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
   );
 };
 
-const Blog = () => {
+interface BlogProps {
+  slug?: string;
+}
+
+const Blog = ({ slug }: BlogProps) => {
   // Check for SSR data
   const getSSRData = () => {
     if (typeof window !== "undefined") {
@@ -95,11 +99,31 @@ const Blog = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // SSR for single post view
+    if (slug) {
+      (async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const post = ssrData?.post || (await apiService.getPostBySlug(slug));
+          if (post) {
+            setSelectedPost(post);
+          } else {
+            setError("Post not found");
+          }
+        } catch (err) {
+          setError("Failed to load post");
+        } finally {
+          setLoading(false);
+        }
+      })();
+      return;
+    }
     // Only load posts if we don't have SSR data
     if (!ssrData?.posts) {
       loadPosts(1, true);
     }
-  }, []);
+  }, [slug]);
 
   const loadPosts = async (page: number = 1, reset: boolean = false) => {
     setLoading(true);
@@ -235,13 +259,12 @@ const Blog = () => {
                           }}
                         />
 
-                        <Button
-                          variant="outline"
-                          className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                          onClick={() => setSelectedPost(post)}
+                        <a
+                          href={`/blog/${post.slug}`}
+                          className="block w-full border border-primary text-primary hover:bg-primary hover:text-primary-foreground px-4 py-2 text-center rounded transition-colors"
                         >
                           Read More
-                        </Button>
+                        </a>
                       </div>
                     </Card>
                   );

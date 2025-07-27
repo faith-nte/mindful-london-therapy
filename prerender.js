@@ -9,24 +9,25 @@ const toAbsolute = (p) => path.resolve(__dirname, p);
 const template = fs.readFileSync(toAbsolute("dist/index.html"), "utf-8");
 const { render, getPageMeta } = await import("./dist/server/entry-server.js");
 
-
 // Helper to fetch all blog post slugs
 async function fetchBlogSlugs() {
   try {
-    const res = await fetch('https://fenn.digital/wp-json/wp/v2/posts?per_page=100&_fields=slug');
+    const res = await fetch(
+      "https://fenn.digital/wp-json/wp/v2/posts?per_page=100&_fields=slug"
+    );
     if (!res.ok) return [];
     const posts = await res.json();
-    return posts.map(post => `/blog/${post.slug}`);
+    return posts.map((post) => `/blog/${post.slug}`);
   } catch (e) {
-    console.warn('Failed to fetch blog slugs:', e);
+    console.warn("Failed to fetch blog slugs:", e);
     return [];
   }
 }
 
 // Build routes to prerender
 const staticRoutes = [
-  '/',
-  '/blog',
+  "/",
+  "/blog",
   // '/case-study', // Temporarily skip to avoid SSR error
   // Add new pages/blogs here as you create them in src/pages and App.tsx
 ];
@@ -35,7 +36,7 @@ const staticRoutes = [
   const blogRoutes = await fetchBlogSlugs();
   const routesToPrerender = [...staticRoutes, ...blogRoutes];
 
-// Use async/await for render
+  // Use async/await for render
   for (const url of routesToPrerender) {
     // Get meta and SSR data if needed
     let apiData = undefined;

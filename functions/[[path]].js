@@ -47,17 +47,34 @@ export async function onRequest(context) {
   ];
 
   // Serve single blog post HTML if it exists (e.g., /blog/my-post)
+  // SSR single blog post page by fetching from API and rendering
   if (pathname.startsWith("/blog/")) {
-    const htmlPath = `${pathname}.html`;
-    try {
-      const response = await context.env.ASSETS.fetch(
-        new Request(`${url.origin}${htmlPath}`)
-      );
-      if (response.status === 200) {
-        return response;
+    const slug = pathname.replace("/blog/", "");
+    if (slug) {
+      try {
+        // Fetch post data from WordPress API
+        const apiUrl = `https://fenn.digital/wp-json/wp/v2/posts?slug=${encodeURIComponent(
+          slug
+        )}`;
+        const apiRes = await fetch(apiUrl);
+        if (apiRes.status === 200) {
+          const posts = await apiRes.json();
+          if (posts.length > 0) {
+            const post = posts[0];
+            // SSR: import entry-server.js and render
+            const { render } = await import("../dist/server/entry-server.js");
+            const html = await render({ url: pathname, post });
+            return new Response(html, {
+              headers: {
+                "content-type": "text/html",
+                "cache-control": "no-cache",
+              },
+            });
+          }
+        }
+      } catch (e) {
+        console.log(`Failed to SSR blog post for slug ${slug}:`, e);
       }
-    } catch (e) {
-      console.log(`Failed to fetch prerendered blog post file ${htmlPath}:`, e);
     }
   }
 
