@@ -105,15 +105,39 @@ export async function onRequest(context) {
             }
 
             // SSR: import entry-server.js and render complete HTML
-            const { renderFullHTML } = await import("../dist/server/entry-server.js");
-            const html = await renderFullHTML(pathname, { post, ...postMeta }, template);
-            
-            return new Response(html, {
-              headers: {
-                "content-type": "text/html; charset=UTF-8",
-                "cache-control": "public, max-age=3600", // Cache blog posts for 1 hour
-              },
-            });
+            try {
+              const { renderFullHTML } = await import("../dist/server/entry-server.js");
+              const html = await renderFullHTML(pathname, { post, ...postMeta }, template);
+              
+              if (html) {
+                return new Response(html, {
+                  headers: {
+                    "content-type": "text/html; charset=UTF-8",
+                    "cache-control": "public, max-age=3600", // Cache blog posts for 1 hour
+                  },
+                });
+              }
+            } catch (ssrError) {
+              console.log(`SSR failed for ${pathname}:`, ssrError);
+              // Fall back to template with injected data
+              if (template) {
+                let fallbackHtml = template;
+                
+                // Inject post data as SSR data for hydration
+                const ssrDataScript = `<script>window.__SSR_DATA__ = ${JSON.stringify({ post, ...postMeta })};</script>`;
+                fallbackHtml = fallbackHtml.replace('</head>', `${ssrDataScript}\n</head>`);
+                
+                // Update title
+                fallbackHtml = fallbackHtml.replace(/<title[^>]*>.*?<\/title>/i, `<title>${postMeta.title}</title>`);
+                
+                return new Response(fallbackHtml, {
+                  headers: {
+                    "content-type": "text/html; charset=UTF-8",
+                    "cache-control": "public, max-age=3600",
+                  },
+                });
+              }
+            }
           }
         }
       } catch (e) {
