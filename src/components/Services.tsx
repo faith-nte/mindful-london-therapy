@@ -70,8 +70,9 @@ const Services = () => {
               Therapy Services
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Professional therapy services tailored to your individual needs, 
-              delivered with compassion and expertise in central London.
+              <strong>Professional therapy services</strong> tailored to your individual needs, 
+              delivered with compassion and expertise in central London. 
+              <a href="#contact" className="text-primary hover:text-primary/80 underline">Contact me</a> to learn more about how I can support you.
             </p>
           </div>
 
@@ -105,7 +106,11 @@ const Services = () => {
                 <Button 
                   variant="outline" 
                   className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                  onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
                 >
                   Book This Service
                 </Button>

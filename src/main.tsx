@@ -10,6 +10,12 @@ const app = (
   </BrowserRouter>
 );
 
-// Always use createRoot to avoid SSR/CSR mismatch issues
-// The SSR data is handled within components via window.__SSR_DATA__
-createRoot(root).render(app);
+// Check if this is a hydration or initial render
+// If there's SSR content, hydrate; otherwise, create new root
+if (root.innerHTML.includes('<!--app-html-->') || root.innerHTML.trim() === '') {
+  // No SSR content, use createRoot
+  createRoot(root).render(app);
+} else {
+  // SSR content exists, hydrate it
+  hydrateRoot(root, app);
+}

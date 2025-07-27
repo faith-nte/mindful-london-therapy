@@ -57,8 +57,9 @@ const Approach = () => {
               My Therapeutic Approach
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Creating a foundation of trust, safety, and collaboration to support 
-              your journey toward healing and personal growth.
+              Creating a foundation of <strong>trust, safety, and collaboration</strong> to support 
+              your journey toward <strong>healing and personal growth</strong>. 
+              Explore my <a href="#services" className="text-primary hover:text-primary/80 underline">therapy services</a> to find the right fit for you.
             </p>
           </div>
 

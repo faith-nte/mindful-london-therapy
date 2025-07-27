@@ -11,8 +11,8 @@ const About = () => {
               About Dr. Sarah Mitchell
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Dedicated to providing compassionate, professional therapy services 
-              that honor your unique journey toward healing and personal growth.
+              Dedicated to providing <strong>compassionate, professional therapy services</strong> 
+              that honor your unique journey toward <strong>healing and personal growth</strong>.
             </p>
           </div>
 
@@ -21,7 +21,7 @@ const About = () => {
               <Card className="p-8 shadow-lg">
                 <img 
                   src={therapistImage}
-                  alt="Dr. Sarah Mitchell"
+                  alt="Dr. Sarah Mitchell - Chartered Clinical Psychologist specializing in anxiety, depression, and trauma therapy in London"
                   className="w-32 h-32 rounded-full mx-auto mb-6 object-cover border-4 border-primary/20"
                 />
                 <div className="text-center">
@@ -46,15 +46,17 @@ const About = () => {
                   My Philosophy
                 </h3>
                 <p className="text-muted-foreground leading-relaxed mb-4">
-                  I believe that every person has the capacity for growth and healing. 
-                  My role is to provide a safe, non-judgmental space where you can 
+                  I believe that every person has the capacity for <strong>growth and healing</strong>. 
+                  My role is to provide a <strong>safe, non-judgmental space</strong> where you can 
                   explore your thoughts and feelings, develop new coping strategies, 
                   and work toward your goals.
                 </p>
                 <p className="text-muted-foreground leading-relaxed">
-                  Drawing from evidence-based therapeutic approaches, I tailor my 
+                  Drawing from <strong>evidence-based therapeutic approaches</strong>, I tailor my 
                   work to meet your individual needs, whether you're dealing with 
-                  anxiety, depression, relationship issues, or life transitions.
+                  <strong>anxiety, depression, relationship issues, or life transitions</strong>. 
+                  Learn more about my <a href="#services" className="text-primary hover:text-primary/80 underline">therapy services</a> and 
+                  <a href="#approach" className="text-primary hover:text-primary/80 underline ml-1">therapeutic approach</a>.
                 </p>
               </Card>
 

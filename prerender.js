@@ -51,7 +51,7 @@ const routesToPrerender = [
       ? `<script>window.__SSR_DATA__ = ${JSON.stringify(apiData)};</script>` 
       : ''
     
-    // Update meta tags
+    // Update meta tags and inject content
     let html = template
       .replace(`<!--app-html-->`, appHtml)
       .replace('<title>Dr. Sarah Mitchell - Therapy Services in London</title>', `<title>${pageMeta.title}</title>`)
@@ -59,7 +59,16 @@ const routesToPrerender = [
       .replace(/(<meta property="og:title" content=")[^"]*(")/g, `$1${pageMeta.title}$2`)
       .replace(/(<meta property="og:description" content=")[^"]*(")/g, `$1${pageMeta.description}$2`)
       .replace(/(<meta property="og:image" content=")[^"]*(")/g, `$1${pageMeta.ogImage}$2`)
-      .replace('</head>', `${apiDataScript}${pageMeta.schema ? `<script type="application/ld+json">${JSON.stringify(pageMeta.schema)}</script>` : ''}<link rel="canonical" href="${pageMeta.canonical}" /></head>`)
+      .replace(/(<meta property="og:url" content=")[^"]*(")/g, `$1${pageMeta.canonical}$2`)
+      .replace('</head>', `${apiDataScript}${pageMeta.schema ? `<script type="application/ld+json">${JSON.stringify(pageMeta.schema, null, 2)}</script>` : ''}<link rel="canonical" href="${pageMeta.canonical}" /></head>`)
+    
+    // Ensure proper viewport and charset
+    if (!html.includes('viewport')) {
+      html = html.replace('<head>', '<head>\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">')
+    }
+    if (!html.includes('charset')) {
+      html = html.replace('<head>', '<head>\n  <meta charset="utf-8">')
+    }
 
     const filePath = `dist${url === '/' ? '/index' : url}.html`
     const fullPath = toAbsolute(filePath)

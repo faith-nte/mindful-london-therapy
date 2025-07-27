@@ -40,8 +40,20 @@ const getPageMeta = (url: string, apiData?: any) => {
           "description": "Expert insights on mental health and therapy",
           "author": {
             "@type": "Person",
-            "name": "Dr. Sarah Mitchell"
-          }
+            "name": "Dr. Sarah Mitchell",
+            "jobTitle": "Chartered Clinical Psychologist",
+            "affiliation": "BACP"
+          },
+          "mainEntity": apiData?.posts ? apiData.posts.map((post: any) => ({
+            "@type": "BlogPosting",
+            "headline": post.title.rendered,
+            "description": post.excerpt.rendered.replace(/<[^>]*>/g, '').substring(0, 160),
+            "datePublished": post.date,
+            "author": {
+              "@type": "Person",
+              "name": "Dr. Sarah Mitchell"
+            }
+          })) : []
         }
       };
     
@@ -79,6 +91,18 @@ export async function render(url: string, apiData?: any) {
   if (typeof window === 'undefined') {
     (global as any).__SSR_DATA__ = apiData || {};
     (global as any).__PAGE_META__ = getPageMeta(url, apiData);
+    
+    // Ensure window is not referenced during SSR
+    (global as any).window = undefined;
+    (global as any).document = {
+      getElementById: () => null,
+      querySelector: () => null,
+      querySelectorAll: () => [],
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      createElement: () => ({}),
+      body: { appendChild: () => {} }
+    };
   }
   
   const html = ReactDOMServer.renderToString(

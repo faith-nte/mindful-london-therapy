@@ -4,8 +4,10 @@ import heroImage from "@/assets/hero-therapy-office.jpg";
 
 const Hero = () => {
   const scrollToContact = () => {
-    const element = document.getElementById('contact');
-    element?.scrollIntoView({ behavior: 'smooth' });
+    if (typeof window !== 'undefined') {
+      const element = document.getElementById('contact');
+      element?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -14,6 +16,8 @@ const Hero = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroImage})` }}
+        role="img"
+        aria-label="Professional therapy office in central London with comfortable seating and natural lighting"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/85 to-background/70"></div>
       </div>
@@ -27,9 +31,9 @@ const Hero = () => {
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-            Professional therapy services in the heart of London. 
-            Supporting you through life's challenges with compassion, 
-            expertise, and evidence-based approaches.
+            <strong>Professional therapy services</strong> in the heart of <strong>London</strong>. 
+            Supporting you through life's challenges with <strong>compassion</strong>, 
+            <strong>expertise</strong>, and <strong>evidence-based approaches</strong>.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -43,7 +47,11 @@ const Hero = () => {
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
               className="border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-3 text-lg"
             >
               Learn More
