@@ -120,26 +120,119 @@ export async function render(url: string, apiData?: any) {
   if (url.startsWith("/blog/") && apiData?.post) {
     post = apiData.post;
   }
+
   const appHtml = ReactDOMServer.renderToString(
     <StaticRouter location={url}>
       <App post={post} />
     </StaticRouter>
   );
-  // Inject CSS/JS assets from dist/assets
-  return `<!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Dr. Sarah Mitchell Therapy</title>
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="stylesheet" href="/assets/index-eaNakzb3.css" />
-      </head>
-      <body>
-        <div id="root">${appHtml}</div>
-        <script type="module" src="/assets/index-DgEnVBRS.js"></script>
-      </body>
-    </html>`;
+
+  const pageMeta = getPageMeta(url, apiData);
+
+  // Return the rendered HTML string - it will be injected into template by prerender.js or Cloudflare function
+  return appHtml;
+}
+
+// New function for complete HTML document rendering (used by Cloudflare function)
+export async function renderFullHTML(url: string, apiData?: any, template?: string) {
+  const appHtml = await render(url, apiData);
+  const pageMeta = getPageMeta(url, apiData);
+
+  // If no template provided, create a basic one
+  if (!template) {
+    template = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dr. Sarah Mitchell Therapy</title>
+    <meta name="description" content="Professional therapy services in central London. Dr. Sarah Mitchell offers individual, couples, and group therapy with evidence-based approaches. BACP accredited." />
+    <meta property="og:title" content="Dr. Sarah Mitchell Therapy" />
+    <meta property="og:description" content="Professional therapy services in central London. Dr. Sarah Mitchell offers individual, couples, and group therapy with evidence-based approaches. BACP accredited." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://yourdomain.com" />
+    <meta property="og:image" content="https://yourdomain.com/og-home.jpg" />
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <div id="root"><!--app-html--></div>
+    <script>
+      window.__SSR_DATA__ = ${JSON.stringify(apiData || {})};
+      window.__PAGE_META__ = ${JSON.stringify(pageMeta)};
+    </script>
+  </body>
+</html>`;
+  }
+
+  // Inject SSR data and hydration scripts
+  let html = template;
+  
+  // Inject hydration data before any existing scripts
+  const hydrationScript = `<script>
+    window.__SSR_DATA__ = ${JSON.stringify(apiData || {})};
+    window.__PAGE_META__ = ${JSON.stringify(pageMeta)};
+  </script>`;
+
+  if (html.includes("</body>")) {
+    html = html.replace("</body>", `${hydrationScript}\n</body>`);
+  } else {
+    html = html.replace("<!--app-html-->", `${appHtml}\n${hydrationScript}`);
+  }
+
+  // Replace the app HTML placeholder
+  html = html.replace("<!--app-html-->", appHtml);
+
+  // Update meta tags
+  if (pageMeta?.title) {
+    html = html.replace(
+      /<title>([^<]*)<\/title>/,
+      `<title>${pageMeta.title}</title>`
+    );
+    html = html.replace(
+      /(<meta property="og:title" content=")[^"]*(")/,
+      `$1${pageMeta.title}$2`
+    );
+  }
+
+  if (pageMeta?.description) {
+    html = html.replace(
+      /(<meta name="description" content=")[^"]*(")/,
+      `$1${pageMeta.description}$2`
+    );
+    html = html.replace(
+      /(<meta property="og:description" content=")[^"]*(")/,
+      `$1${pageMeta.description}$2`
+    );
+  }
+
+  if (pageMeta?.ogImage) {
+    html = html.replace(
+      /(<meta property="og:image" content=")[^"]*(")/,
+      `$1${pageMeta.ogImage}$2`
+    );
+  }
+
+  if (pageMeta?.canonical) {
+    html = html.replace(
+      /(<meta property="og:url" content=")[^"]*(")/,
+      `$1${pageMeta.canonical}$2`
+    );
+    // Add canonical link and schema
+    html = html.replace(
+      "</head>",
+      `${
+        pageMeta.schema
+          ? `<script type="application/ld+json">${JSON.stringify(
+              pageMeta.schema,
+              null,
+              2
+            )}</script>`
+          : ""
+      }<link rel="canonical" href="${pageMeta.canonical}" /></head>`
+    );
+  }
+
+  return html;
 }
 
 export { getPageMeta };

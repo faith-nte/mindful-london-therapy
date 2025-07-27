@@ -87,8 +87,11 @@ const Blog = ({ slug, ssrPost }: BlogProps) => {
   };
 
   const ssrData = getSSRData();
+  
+  // For SSR, use the passed post data directly
+  const initialPost = ssrPost || ssrData?.post;
   const [posts, setPosts] = useState<WordPressPost[]>(ssrData?.posts || []);
-  const [selectedPost, setSelectedPost] = useState<WordPressPost | null>(null);
+  const [selectedPost, setSelectedPost] = useState<WordPressPost | null>(initialPost || null);
   const [loading, setLoading] = useState(!ssrData?.posts);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -102,16 +105,19 @@ const Blog = ({ slug, ssrPost }: BlogProps) => {
   useEffect(() => {
     // SSR for single post view
     if (slug) {
-      if (ssrPost) {
-        setSelectedPost(ssrPost);
+      // If we already have the post from SSR or props, don't fetch again
+      if (initialPost) {
+        setSelectedPost(initialPost);
         setLoading(false);
         return;
       }
+      
+      // Only fetch if we don't have SSR data
       (async () => {
         setLoading(true);
         setError(null);
         try {
-          const post = ssrData?.post || (await apiService.getPostBySlug(slug));
+          const post = await apiService.getPostBySlug(slug);
           if (post) {
             setSelectedPost(post);
           } else {
@@ -125,11 +131,12 @@ const Blog = ({ slug, ssrPost }: BlogProps) => {
       })();
       return;
     }
+    
     // Only load posts if we don't have SSR data
-    if (!ssrData?.posts) {
+    if (!ssrData?.posts && !posts.length) {
       loadPosts(1, true);
     }
-  }, [slug, ssrPost]);
+  }, [slug, initialPost]);
 
   const loadPosts = async (page: number = 1, reset: boolean = false) => {
     setLoading(true);

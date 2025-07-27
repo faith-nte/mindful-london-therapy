@@ -46,28 +46,72 @@ export async function onRequest(context) {
     // Add more static pages here
   ];
 
-  // Serve single blog post HTML if it exists (e.g., /blog/my-post)
-  // SSR single blog post page by fetching from API and rendering
+  // SSR single blog post pages
   if (pathname.startsWith("/blog/")) {
     const slug = pathname.replace("/blog/", "");
     if (slug) {
       try {
-        // Fetch post data from WordPress API
+        // Fetch post data from WordPress API with embedded media
         const apiUrl = `https://fenn.digital/wp-json/wp/v2/posts?slug=${encodeURIComponent(
           slug
-        )}`;
+        )}&_embed=1`;
         const apiRes = await fetch(apiUrl);
         if (apiRes.status === 200) {
           const posts = await apiRes.json();
           if (posts.length > 0) {
             const post = posts[0];
-            // SSR: import entry-server.js and render
-            const { render } = await import("../dist/server/entry-server.js");
-            const html = await render({ url: pathname, post });
+            
+            // Enhanced meta data for blog posts
+            const postMeta = {
+              title: post.title.rendered,
+              description: post.excerpt.rendered
+                .replace(/<[^>]*>/g, "")
+                .substring(0, 160),
+              ogImage: post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || "https://yourdomain.com/og-blog.jpg",
+              canonical: `https://yourdomain.com/blog/${post.slug}`,
+              schema: {
+                "@context": "https://schema.org",
+                "@type": "BlogPosting",
+                headline: post.title.rendered,
+                description: post.excerpt.rendered.replace(/<[^>]*>/g, "").substring(0, 160),
+                datePublished: post.date,
+                author: {
+                  "@type": "Person",
+                  name: "Dr. Sarah Mitchell",
+                  jobTitle: "Chartered Clinical Psychologist",
+                },
+                publisher: {
+                  "@type": "Organization",
+                  name: "Dr. Sarah Mitchell Therapy Services",
+                },
+                mainEntityOfPage: {
+                  "@type": "WebPage",
+                  "@id": `https://yourdomain.com/blog/${post.slug}`,
+                },
+              },
+            };
+
+            // Load the HTML template for proper asset injection
+            let template;
+            try {
+              const templateResponse = await context.env.ASSETS.fetch(
+                new Request(`${url.origin}/index.html`)
+              );
+              if (templateResponse.status === 200) {
+                template = await templateResponse.text();
+              }
+            } catch (e) {
+              console.log("Failed to load template:", e);
+            }
+
+            // SSR: import entry-server.js and render complete HTML
+            const { renderFullHTML } = await import("../dist/server/entry-server.js");
+            const html = await renderFullHTML(pathname, { post, ...postMeta }, template);
+            
             return new Response(html, {
               headers: {
                 "content-type": "text/html; charset=UTF-8",
-                "cache-control": "no-cache",
+                "cache-control": "public, max-age=3600", // Cache blog posts for 1 hour
               },
             });
           }

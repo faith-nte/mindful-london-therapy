@@ -7,7 +7,7 @@ const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const toAbsolute = (p) => path.resolve(__dirname, p);
 
 const template = fs.readFileSync(toAbsolute("dist/index.html"), "utf-8");
-const { render, getPageMeta } = await import("./dist/server/entry-server.js");
+const { render, getPageMeta, renderFullHTML } = await import("./dist/server/entry-server.js");
 
 // Helper to fetch all blog post slugs
 async function fetchBlogSlugs() {
@@ -49,57 +49,8 @@ const staticRoutes = [
         _embedded: {},
       };
     }
-    const pageMeta = getPageMeta(url, apiData);
-    const appHtml = await render(url, apiData);
-    let html = template.replace("<!--app-html-->", appHtml);
-
-    // Update meta tags and inject content
-    if (pageMeta && pageMeta.title) {
-      html = html.replace(
-        "<title>Dr. Sarah Mitchell - Therapy Services in London</title>",
-        `<title>${pageMeta.title}</title>`
-      );
-    }
-    if (pageMeta && pageMeta.description) {
-      html = html.replace(
-        /(<meta name="description" content=")[^"]*(")/g,
-        `$1${pageMeta.description}$2`
-      );
-      html = html.replace(
-        /(<meta property="og:description" content=")[^"]*(")/g,
-        `$1${pageMeta.description}$2`
-      );
-    }
-    if (pageMeta && pageMeta.title) {
-      html = html.replace(
-        /(<meta property="og:title" content=")[^"]*(")/g,
-        `$1${pageMeta.title}$2`
-      );
-    }
-    if (pageMeta && pageMeta.ogImage) {
-      html = html.replace(
-        /(<meta property="og:image" content=")[^"]*(")/g,
-        `$1${pageMeta.ogImage}$2`
-      );
-    }
-    if (pageMeta && pageMeta.canonical) {
-      html = html.replace(
-        /(<meta property="og:url" content=")[^"]*(")/g,
-        `$1${pageMeta.canonical}$2`
-      );
-      html = html.replace(
-        "</head>",
-        `${
-          pageMeta.schema
-            ? `<script type="application/ld+json">${JSON.stringify(
-                pageMeta.schema,
-                null,
-                2
-              )}</script>`
-            : ""
-        }<link rel="canonical" href="${pageMeta.canonical}" /></head>`
-      );
-    }
+    // Use the new renderFullHTML function for complete HTML generation
+    let html = await renderFullHTML(url, apiData, template);
 
     // Ensure proper viewport and charset
     if (!html.includes("viewport")) {
