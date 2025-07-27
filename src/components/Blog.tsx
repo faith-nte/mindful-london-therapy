@@ -26,6 +26,22 @@ const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
     return html.replace(/<[^>]*>/g, "");
   };
 
+  // Bold key phrases in content for SEO
+  const boldKeyPhrases = (html: string) => {
+    let out = html;
+    [
+      /Dr\. Sarah Mitchell/gi,
+      /mental health/gi,
+      /therapy/gi,
+      /private practice/gi,
+      /SEO/gi,
+      /Three Best Rated/gi
+    ].forEach((re) => {
+      out = out.replace(re, (match) => `<strong>${match}</strong>`);
+    });
+    return out;
+  };
+
   const featuredImage = post._embedded?.["wp:featuredmedia"]?.[0];
 
   return (
@@ -41,6 +57,7 @@ const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
 
       <article>
         <div className="text-center mb-12">
+          {/* H1 for SEO */}
           <h1 className="text-4xl font-bold text-professional mb-4">
             {stripHtml(post.title.rendered)}
           </h1>
@@ -53,7 +70,7 @@ const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
           <div className="mb-12">
             <img
               src={featuredImage.source_url}
-              alt={featuredImage.alt_text || post.title.rendered}
+              alt={featuredImage.alt_text || stripHtml(post.title.rendered)}
               className="w-full h-auto rounded-lg shadow-lg"
             />
           </div>
@@ -62,7 +79,7 @@ const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
         <Card className="p-8">
           <div
             className="prose prose-lg max-w-none text-foreground"
-            dangerouslySetInnerHTML={{ __html: post.content.rendered }}
+            dangerouslySetInnerHTML={{ __html: boldKeyPhrases(post.content.rendered) }}
           />
         </Card>
       </article>
