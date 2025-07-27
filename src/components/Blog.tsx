@@ -71,9 +71,10 @@ const BlogPostView = ({ post, onBack }: BlogPostViewProps) => {
 
 interface BlogProps {
   slug?: string;
+  ssrPost?: any;
 }
 
-const Blog = ({ slug }: BlogProps) => {
+const Blog = ({ slug, ssrPost }: BlogProps) => {
   // Check for SSR data
   const getSSRData = () => {
     if (typeof window !== "undefined") {
@@ -101,6 +102,11 @@ const Blog = ({ slug }: BlogProps) => {
   useEffect(() => {
     // SSR for single post view
     if (slug) {
+      if (ssrPost) {
+        setSelectedPost(ssrPost);
+        setLoading(false);
+        return;
+      }
       (async () => {
         setLoading(true);
         setError(null);
@@ -123,7 +129,7 @@ const Blog = ({ slug }: BlogProps) => {
     if (!ssrData?.posts) {
       loadPosts(1, true);
     }
-  }, [slug]);
+  }, [slug, ssrPost]);
 
   const loadPosts = async (page: number = 1, reset: boolean = false) => {
     setLoading(true);

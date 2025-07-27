@@ -10,7 +10,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = ({ post }: { post?: any }) => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -18,7 +18,7 @@ const App = () => (
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/blog" element={<BlogPage />} />
-        <Route path="/blog/:slug" element={<BlogPage />} />
+        <Route path="/blog/:slug" element={<BlogPage post={post} />} />
         <Route path="/case-study" element={<CaseStudyPage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
