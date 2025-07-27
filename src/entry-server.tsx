@@ -173,8 +173,8 @@ export async function renderFullHTML(url: string, apiData?: any, template?: stri
     window.__PAGE_META__ = ${JSON.stringify(pageMeta)};
   </script>`;
 
-  // Replace the app HTML placeholder with SSR content and add hydration marker
-  html = html.replace("<!--app-html-->", `<!--ssr-hydrated-->${appHtml}<!--/ssr-hydrated-->`);
+  // Replace the app HTML placeholder with SSR content
+  html = html.replace("<!--app-html-->", appHtml);
   
   // Add hydration script before </body>
   if (html.includes("</body>")) {

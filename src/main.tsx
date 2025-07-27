@@ -11,8 +11,11 @@ const app = (
 );
 
 // Check if this is a hydration or initial render
-// Look for SSR hydration markers to determine if we should hydrate
-if (root.innerHTML.includes('<!--ssr-hydrated-->')) {
+// Look for SSR data to determine if we should hydrate
+const hasSSRData = typeof window !== 'undefined' && (window as any).__SSR_DATA__;
+const hasSSRContent = root.innerHTML.trim() !== '' && !root.innerHTML.includes('<!--app-html-->');
+
+if (hasSSRData || hasSSRContent) {
   // SSR content exists, hydrate it
   hydrateRoot(root, app);
 } else {
