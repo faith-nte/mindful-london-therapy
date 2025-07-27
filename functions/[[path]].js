@@ -66,7 +66,7 @@ export async function onRequest(context) {
             const html = await render({ url: pathname, post });
             return new Response(html, {
               headers: {
-                "content-type": "text/html",
+                "content-type": "text/html; charset=UTF-8",
                 "cache-control": "no-cache",
               },
             });
@@ -77,7 +77,6 @@ export async function onRequest(context) {
       }
     }
   }
-
   // Serve main prerendered pages
   if (prerenderedPaths.includes(pathname)) {
     const htmlPath = pathname === "/" ? "/index.html" : `${pathname}.html`;
@@ -86,7 +85,13 @@ export async function onRequest(context) {
         new Request(`${url.origin}${htmlPath}`)
       );
       if (response.status === 200) {
-        return response;
+        // Ensure correct content-type for HTML
+        return new Response(await response.text(), {
+          headers: {
+            "content-type": "text/html; charset=UTF-8",
+            "cache-control": "no-cache",
+          },
+        });
       }
     } catch (e) {
       console.log(`Failed to fetch prerendered file ${htmlPath}:`, e);
