@@ -10,9 +10,6 @@ const app = (
   </BrowserRouter>
 );
 
-// Use hydration for SSR in production
-if (import.meta.env.PROD) {
-  hydrateRoot(root, app);
-} else {
-  createRoot(root).render(app);
-}
+// Always use createRoot to avoid SSR/CSR mismatch issues
+// The SSR data is handled within components via window.__SSR_DATA__
+createRoot(root).render(app);
