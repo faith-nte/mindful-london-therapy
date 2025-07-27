@@ -1,37 +1,51 @@
-import { render } from "../dist/server/entry-server.js";
-
-// List of static files to serve
-const STATIC_FILES = [
-  "/favicon.ico",
-  "/robots.txt",
-  "/placeholder.svg",
-  // Add more as needed
-];
+// Cloudflare Function for SPA routing fallback
+// The SSG/prerendering handles SEO pages, this just ensures client-side routing works
 
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   const pathname = url.pathname;
 
-  // Serve static files from dist
-  if (STATIC_FILES.includes(pathname)) {
-    // Try dist first, then dist/server
-    const filePath =
-      pathname === "/favicon.ico"
-        ? "../dist/favicon.ico"
-        : `../dist${pathname}`;
+  // List of static file extensions to serve directly
+  const staticExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot'];
+  const isStaticFile = staticExtensions.some(ext => pathname.endsWith(ext));
+
+  // Serve static files directly
+  if (isStaticFile || pathname === '/robots.txt') {
     try {
-      const file = await context.env.ASSETS.fetch(pathname);
-      if (file && file.status === 200) {
-        return file;
+      const response = await context.env.ASSETS.fetch(context.request);
+      if (response.status === 200) {
+        return response;
       }
     } catch (e) {
-      // fallback to SSR if not found
+      // Continue to fallback
     }
   }
 
-  // SSR fallback
-  const html = await render(url.toString());
-  return new Response(html, {
-    headers: { "content-type": "text/html" },
-  });
+  // Check if we have a prerendered HTML file for this route
+  const prerenderedPaths = ['/', '/blog', '/case-study'];
+  
+  if (prerenderedPaths.includes(pathname)) {
+    const htmlPath = pathname === '/' ? '/index.html' : `${pathname}.html`;
+    try {
+      const response = await context.env.ASSETS.fetch(htmlPath);
+      if (response.status === 200) {
+        return response;
+      }
+    } catch (e) {
+      // Continue to fallback
+    }
+  }
+
+  // Fallback to index.html for SPA routing (client-side rendering)
+  try {
+    const indexResponse = await context.env.ASSETS.fetch('/index.html');
+    return new Response(await indexResponse.text(), {
+      headers: { 
+        'content-type': 'text/html',
+        'cache-control': 'no-cache' // Don't cache SPA fallbacks
+      }
+    });
+  } catch (e) {
+    return new Response('Not Found', { status: 404 });
+  }
 }
