@@ -120,12 +120,26 @@ export async function render(url: string, apiData?: any) {
   if (url.startsWith("/blog/") && apiData?.post) {
     post = apiData.post;
   }
-  const html = ReactDOMServer.renderToString(
+  const appHtml = ReactDOMServer.renderToString(
     <StaticRouter location={url}>
       <App post={post} />
     </StaticRouter>
   );
-  return html;
+  // Inject CSS/JS assets from dist/assets
+  return `<!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Dr. Sarah Mitchell Therapy</title>
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="stylesheet" href="/assets/index-eaNakzb3.css" />
+      </head>
+      <body>
+        <div id="root">${appHtml}</div>
+        <script type="module" src="/assets/index-DgEnVBRS.js"></script>
+      </body>
+    </html>`;
 }
 
 export { getPageMeta };
