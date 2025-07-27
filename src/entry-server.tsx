@@ -11,14 +11,20 @@ const getPageMeta = (url: string, apiData?: any) => {
     const baseUrl = "https://yourdomain.com";
     return {
       title: apiData.title.rendered,
-      description: apiData.excerpt.rendered.replace(/<[^>]*>/g, "").substring(0, 160),
-      ogImage: apiData._embedded?.["wp:featuredmedia"]?.[0]?.source_url || `${baseUrl}/og-blog.jpg`,
+      description: apiData.excerpt.rendered
+        .replace(/<[^>]*>/g, "")
+        .substring(0, 160),
+      ogImage:
+        apiData._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
+        `${baseUrl}/og-blog.jpg`,
       canonical: `${baseUrl}${url}`,
       schema: {
         "@context": "https://schema.org",
         "@type": "BlogPosting",
         headline: apiData.title.rendered,
-        description: apiData.excerpt.rendered.replace(/<[^>]*>/g, "").substring(0, 160),
+        description: apiData.excerpt.rendered
+          .replace(/<[^>]*>/g, "")
+          .substring(0, 160),
         datePublished: apiData.date,
         author: {
           "@type": "Person",
@@ -146,8 +152,8 @@ export async function render(url: string, apiData?: any) {
 
   // Pass SSR post data for /blog/:slug
   let post = undefined;
-  if (url.startsWith("/blog/") && apiData?.post) {
-    post = apiData.post;
+  if (url.startsWith("/blog/") && apiData) {
+    post = apiData;
   }
 
   const appHtml = ReactDOMServer.renderToString(
@@ -163,7 +169,11 @@ export async function render(url: string, apiData?: any) {
 }
 
 // New function for complete HTML document rendering (used by Cloudflare function)
-export async function renderFullHTML(url: string, apiData?: any, template?: string) {
+export async function renderFullHTML(
+  url: string,
+  apiData?: any,
+  template?: string
+) {
   const appHtml = await render(url, apiData);
   const pageMeta = getPageMeta(url, apiData);
 
@@ -195,7 +205,7 @@ export async function renderFullHTML(url: string, apiData?: any, template?: stri
 
   // Inject SSR data and hydration scripts
   let html = template;
-  
+
   // Inject hydration data before any existing scripts
   const hydrationScript = `<script>
     window.__SSR_DATA__ = ${JSON.stringify(apiData || {})};
@@ -204,7 +214,7 @@ export async function renderFullHTML(url: string, apiData?: any, template?: stri
 
   // Replace the app HTML placeholder with SSR content
   html = html.replace("<!--app-html-->", appHtml);
-  
+
   // Add hydration script before </body>
   if (html.includes("</body>")) {
     html = html.replace("</body>", `${hydrationScript}\n</body>`);
