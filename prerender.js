@@ -9,23 +9,27 @@ const toAbsolute = (p) => path.resolve(__dirname, p)
 const template = fs.readFileSync(toAbsolute('dist/index.html'), 'utf-8')
 const { render } = await import('./dist/server/entry-server.js')
 
-const routesToPrerender = fs
-  .readdirSync(toAbsolute('src/pages'))
-  .filter(file => file.endsWith('.tsx'))
-  .map((file) => {
-    const name = file.replace(/\.tsx$/, '').toLowerCase()
-    return name === 'index' ? '/' : `/${name}`
-  })
+// Define routes based on App.tsx and src/pages
+const routesToPrerender = [
+  '/',
+  '/blog',
+  '/case-study',
+  // Add new pages/blogs here as you create them in src/pages and App.tsx
+];
 
 ;(async () => {
   for (const url of routesToPrerender) {
     const appHtml = render(url)
     const html = template.replace('<!--app-html-->', appHtml)
 
+    // Ensure subdirectories exist before writing the file
     const filePath = `dist${url === '/' ? '/index' : url}.html`
-    const dir = path.dirname(toAbsolute(filePath))
-    fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(toAbsolute(filePath), html)
+    const fullPath = toAbsolute(filePath)
+    const dir = path.dirname(fullPath)
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
+    fs.writeFileSync(fullPath, html)
     console.log('✅ Pre-rendered:', filePath)
   }
 })()
