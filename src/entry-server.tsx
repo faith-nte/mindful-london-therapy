@@ -173,14 +173,13 @@ export async function renderFullHTML(url: string, apiData?: any, template?: stri
     window.__PAGE_META__ = ${JSON.stringify(pageMeta)};
   </script>`;
 
+  // Replace the app HTML placeholder with SSR content and add hydration marker
+  html = html.replace("<!--app-html-->", `<!--ssr-hydrated-->${appHtml}<!--/ssr-hydrated-->`);
+  
+  // Add hydration script before </body>
   if (html.includes("</body>")) {
     html = html.replace("</body>", `${hydrationScript}\n</body>`);
-  } else {
-    html = html.replace("<!--app-html-->", `${appHtml}\n${hydrationScript}`);
   }
-
-  // Replace the app HTML placeholder
-  html = html.replace("<!--app-html-->", appHtml);
 
   // Update meta tags
   if (pageMeta?.title) {

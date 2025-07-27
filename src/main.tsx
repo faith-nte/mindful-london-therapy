@@ -11,11 +11,11 @@ const app = (
 );
 
 // Check if this is a hydration or initial render
-// If there's SSR content, hydrate; otherwise, create new root
-if (root.innerHTML.includes('<!--app-html-->') || root.innerHTML.trim() === '') {
-  // No SSR content, use createRoot
-  createRoot(root).render(app);
-} else {
+// Look for SSR hydration markers to determine if we should hydrate
+if (root.innerHTML.includes('<!--ssr-hydrated-->')) {
   // SSR content exists, hydrate it
   hydrateRoot(root, app);
+} else {
+  // No SSR content, use createRoot
+  createRoot(root).render(app);
 }
