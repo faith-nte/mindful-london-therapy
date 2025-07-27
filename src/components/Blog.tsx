@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -75,7 +76,7 @@ interface BlogProps {
 }
 
 const Blog = ({ slug, ssrPost }: BlogProps) => {
-  // Check for SSR data
+  // Check for SSR data - must be consistent between server and client
   const getSSRData = () => {
     if (typeof window !== "undefined") {
       return (window as any).__SSR_DATA__;
@@ -88,21 +89,35 @@ const Blog = ({ slug, ssrPost }: BlogProps) => {
 
   const ssrData = getSSRData();
   
-  // For SSR, use the passed post data directly
-  const initialPost = ssrPost || ssrData?.post;
-  const [posts, setPosts] = useState<WordPressPost[]>(ssrData?.posts || []);
-  const [selectedPost, setSelectedPost] = useState<WordPressPost | null>(initialPost || null);
-  const [loading, setLoading] = useState(!ssrData?.posts);
+  // For SSR consistency, initialize state with the exact same values on server and client
+  const initialPost = ssrPost || ssrData?.post || null;
+  const initialPosts = ssrData?.posts || [];
+  const initialLoading = !ssrData && !initialPost && !initialPosts.length;
+  const initialHasMore = ssrData?.hasMore ?? true;
+  
+  const [posts, setPosts] = useState<WordPressPost[]>(initialPosts);
+  const [selectedPost, setSelectedPost] = useState<WordPressPost | null>(initialPost);
+  const [loading, setLoading] = useState(initialLoading);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(ssrData?.hasMore ?? true);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const [apiService] = useState<WordPressApiService>(
     () => new WordPressApiService({ baseUrl: "https://fenn.digital" })
   );
   const [isConfigured] = useState(true);
   const { toast } = useToast();
 
+  // Prevent hydration mismatches by only loading data on client after hydration
+  const [isHydrated, setIsHydrated] = useState(false);
+  
   useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    // Only run after hydration is complete
+    if (!isHydrated) return;
+    
     // SSR for single post view
     if (slug) {
       // If we already have the post from SSR or props, don't fetch again
@@ -133,10 +148,10 @@ const Blog = ({ slug, ssrPost }: BlogProps) => {
     }
     
     // Only load posts if we don't have SSR data
-    if (!ssrData?.posts && !posts.length) {
+    if (!initialPosts.length) {
       loadPosts(1, true);
     }
-  }, [slug, initialPost]);
+  }, [slug, initialPost, isHydrated]);
 
   const loadPosts = async (page: number = 1, reset: boolean = false) => {
     setLoading(true);
@@ -272,12 +287,12 @@ const Blog = ({ slug, ssrPost }: BlogProps) => {
                           }}
                         />
 
-                        <a
-                          href={`/blog/${post.slug}`}
+                        <Link
+                          to={`/blog/${post.slug}`}
                           className="block w-full border border-primary text-primary hover:bg-primary hover:text-primary-foreground px-4 py-2 text-center rounded transition-colors"
                         >
                           Read More
-                        </a>
+                        </Link>
                       </div>
                     </Card>
                   );

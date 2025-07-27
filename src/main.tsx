@@ -13,12 +13,13 @@ const app = (
 // Check if this is a hydration or initial render
 // Look for SSR data to determine if we should hydrate
 const hasSSRData = typeof window !== 'undefined' && (window as any).__SSR_DATA__;
-const hasSSRContent = root.innerHTML.trim() !== '' && !root.innerHTML.includes('<!--app-html-->');
 
-if (hasSSRData || hasSSRContent) {
+if (hasSSRData) {
   // SSR content exists, hydrate it
+  console.log('Hydrating with SSR data:', hasSSRData);
   hydrateRoot(root, app);
 } else {
   // No SSR content, use createRoot
+  console.log('No SSR data, using createRoot');
   createRoot(root).render(app);
 }
